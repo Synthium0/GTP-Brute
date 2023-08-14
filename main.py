@@ -46,12 +46,12 @@ def run_script():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--interactive", action="store_true", help="Run the script again after finding the PIN")
+    parser.add_argument("-i", "--infinite", action="store_true", help="Run the script again after finding the PIN")
     args = parser.parse_args()
 
     found_pin = run_script()
 
-    if args.interactive:
+    if args.infinite:
         print("Re-running script!")
         while True:
             found_pin = run_script()
