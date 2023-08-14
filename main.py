@@ -2,13 +2,17 @@ import requests
 from tqdm import tqdm
 from multiprocessing import Pool
 import time
+import argparse
 
 url = "https://www.guessthepin.com/prg.php"
 
 
 def guess(num):
-    r = requests.post(url, data={"guess": str(num)})
-    return num, r.url
+    try:
+        r = requests.post(url, data={"guess": str(num)})
+        return num, r.url
+    except requests.exceptions.ConnectionError:
+        return None, None
 
 
 def format_time(seconds):
@@ -18,11 +22,15 @@ def format_time(seconds):
     return time_string
 
 
-if __name__ == "__main__":
+def run_script():
     start_time = time.time()
+    last_tried_pin = None
 
     with Pool(60) as pool:
         for num, url in pool.imap_unordered(guess, tqdm(range(0, 9999), bar_format='|{bar:50}| {n_fmt}/{total_fmt} ({percentage:.0f}%) [ETA: {remaining}, {rate_fmt}]')):
+            if num is None:
+                continue
+            last_tried_pin = num
             if url != "https://www.guessthepin.com/":
                 break
 
@@ -31,4 +39,20 @@ if __name__ == "__main__":
     time_string = format_time(amount_of_time)
 
     print(f"PIN Solved in {time_string}!")
-    print(f"The Correct PIN is: {num}!")
+    print(f"The Correct PIN is: {last_tried_pin}!")
+
+    return last_tried_pin
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--interactive", action="store_true", help="Run the script again after finding the PIN")
+    args = parser.parse_args()
+
+    found_pin = run_script()
+
+    if args.interactive:
+        print("Re-running script!")
+        while True:
+            found_pin = run_script()
+            print("Re-running script!")
